@@ -59,7 +59,7 @@ ots info docs/evidence/witness-2026-10-20-nenrin/jidec-127.txt.ots     # shows t
 ots verify docs/evidence/witness-2026-10-20-nenrin/jidec-127.txt.ots   # needs a Bitcoin node
 ```
 
-So the first tree head, the witness key and both receipts existed before 2026-10-20 05:09:57 UTC. The anchor bounds the time from above only. `tests/test_witness_receipt_nenrin.py` checks steps 1 and 2 and that the proof commits to that SHA-256, offline; checking the block header itself needs a node or a block explorer.
+So the first tree head, the witness key and both receipts existed before 2026-10-20 05:09:57 UTC. The anchor bounds the time from above only. `tests/test_witness_receipt_nenrin.py` checks steps 1 and 2 and that the proof commits to that SHA-256, offline; checking the block header itself needs a node or a block explorer. The companion `tests/test_nenrin_ots_operations.py` evaluates the captured SHA-256, append and prepend operations through the Bitcoin attestation and compares the result with the author-reported merkle root above. A changed append operand leaves the file-digest prefix and attestation metadata intact but changes the computed root. This bounded, fixture-only reader is not a general OTS verifier: it rejects unsupported operations and does not authenticate the reported root, a Bitcoin header, the chain, or the stated time.
 
 ## Limits
 
