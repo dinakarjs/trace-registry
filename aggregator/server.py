@@ -63,9 +63,17 @@ class AggregatorHandler(BaseHTTPRequestHandler):
         # Checked before any read. The length used to go straight to
         # rfile.read: no cap, and a missing or negative one blocked the
         # handler thread until the client closed the connection.
-        raw_length = self.headers.get("Content-Length")
-        if raw_length is None:
+        raw_lengths = (
+            self.headers.get_all("Content-Length")
+            if hasattr(self.headers, "get_all")
+            else [self.headers.get("Content-Length")]
+        )
+        raw_lengths = [v for v in raw_lengths if v is not None]
+        if not raw_lengths:
             raise _BodyError(400, "Content-Length is required")
+        if len(set(raw_lengths)) > 1:
+            raise _BodyError(400, "conflicting Content-Length headers")
+        raw_length = raw_lengths[0]
         if not raw_length.isascii() or not raw_length.isdecimal():
             raise _BodyError(400, "Content-Length is not a non-negative integer")
         try:
