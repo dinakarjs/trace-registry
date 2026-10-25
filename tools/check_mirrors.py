@@ -23,6 +23,7 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
 import re
 import sys
@@ -79,6 +80,14 @@ def _host_of(url: str) -> str:
     return (urllib.parse.urlparse(url).hostname or "").lower()
 
 
+def _is_non_global_ip(host: str) -> bool:
+    try:
+        ip = ipaddress.ip_address(host.strip("[]"))
+    except ValueError:
+        return False
+    return not ip.is_global
+
+
 def _allowed_hosts_from_config(config: dict) -> frozenset:
     hosts = set(_BASE_ALLOWED_HOSTS)
     entries = [config.get("canonical", {})] + list(config.get("mirrors", []))
@@ -88,7 +97,7 @@ def _allowed_hosts_from_config(config: dict) -> frozenset:
         api = entry.get("head_api")
         if isinstance(api, str) and urllib.parse.urlparse(api).scheme == "https":
             host = _host_of(api)
-            if host:
+            if host and not _is_non_global_ip(host):
                 hosts.add(host)
     return frozenset(hosts)
 
@@ -102,6 +111,8 @@ def _check_url_allowed(url: str, allowed_hosts: frozenset) -> str | None:
     if parsed.scheme != "https":
         return f"scheme {parsed.scheme!r} not allowed (https only)"
     host = (parsed.hostname or "").lower()
+    if _is_non_global_ip(host):
+        return f"non-global IP literal {host!r} not allowed"
     if host not in allowed_hosts:
         return f"host {host!r} not in allowlist {sorted(allowed_hosts)}"
     return None

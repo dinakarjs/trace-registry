@@ -143,10 +143,8 @@ def request(url, allowed_hosts, *, timeout, body=None, content_type=None, opener
     observation = {'method': req.get_method(), 'url': url}
     if opener is not None:
         open_fn = opener.open if hasattr(opener, 'open') else opener
-    elif getattr(urllib.request.urlopen, '__module__', '') == 'urllib.request':
-        open_fn = _build_opener(allowed_hosts).open
     else:
-        open_fn = urllib.request.urlopen
+        open_fn = _build_opener(allowed_hosts).open
     try:
         with open_fn(req, timeout=timeout) as response:
             observation['status'] = response.status
@@ -234,7 +232,7 @@ def checkpoint_from_registry_entry(path, batch_id=None):
 
 def capture(*, out, witness_base, expected_log_id, registry_key, witness_key,
             checkpoint_path=None, checkpoint_bytes=None, did_url=None,
-            source_commit=None, source_path=None, timeout=30):
+            source_commit=None, source_path=None, timeout=30, opener=None):
     if (checkpoint_path is None) == (checkpoint_bytes is None):
         raise SystemExit('error: pass exactly one of checkpoint_path or checkpoint_bytes')
     if checkpoint_bytes is None:
@@ -262,7 +260,8 @@ def capture(*, out, witness_base, expected_log_id, registry_key, witness_key,
     failures = []
     for filename, url, body in planned:
         observation = request(url, allowed_hosts, timeout=timeout, body=body,
-                              content_type=CHECKPOINT_CONTENT_TYPE if body is not None else None)
+                              content_type=CHECKPOINT_CONTENT_TYPE if body is not None else None,
+                              opener=opener)
         event = {'method': observation['method'], 'url': url, 'status': observation['status'],
                  'response_file': filename, 'captured_at': observation['captured_at']}
         if observation['body'] is None:
