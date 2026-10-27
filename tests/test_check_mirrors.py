@@ -258,6 +258,7 @@ class TestSSRFGuard(unittest.TestCase):
                 reason = check_mirrors._check_url_allowed(
                     f"https://{host}/head", frozenset({host.strip("[]")})
                 )
+                self.assertIsNotNone(reason)
                 self.assertIn("non-global IP literal", reason)
         self.assertIsNone(check_mirrors._check_url_allowed(
             "https://8.8.8.8/head", frozenset({"8.8.8.8"})
