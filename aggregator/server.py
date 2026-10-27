@@ -64,7 +64,7 @@ class AggregatorHandler(BaseHTTPRequestHandler):
         # rfile.read: no cap, and a missing or negative one blocked the
         # handler thread until the client closed the connection.
         raw_lengths = (
-            self.headers.get_all("Content-Length")
+            (self.headers.get_all("Content-Length") or [])
             if hasattr(self.headers, "get_all")
             else [self.headers.get("Content-Length")]
         )
