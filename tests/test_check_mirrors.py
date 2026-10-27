@@ -242,6 +242,28 @@ class TestSSRFGuard(unittest.TestCase):
         self.assertIsNotNone(check_mirrors._check_url_allowed("https://evil.example.com/x", allowed))
         self.assertIsNone(check_mirrors._check_url_allowed("https://api.github.com/x", allowed))
 
+    def test_config_does_not_admit_non_global_ip_literals(self):
+        for host in ("127.0.0.1", "10.0.0.1", "169.254.169.254", "[::1]", "[fc00::1]"):
+            with self.subTest(host=host):
+                config = {"canonical": {"head_api": f"https://{host}/head"}}
+                self.assertNotIn(host.strip("[]"), check_mirrors._allowed_hosts_from_config(config))
+        hosts = check_mirrors._allowed_hosts_from_config(
+            {"canonical": {"head_api": "https://8.8.8.8/head"}}
+        )
+        self.assertIn("8.8.8.8", hosts)
+
+    def test_explicit_allowlist_does_not_override_non_global_ip_refusal(self):
+        for host in ("127.0.0.1", "10.0.0.1", "169.254.169.254", "[::1]", "[fc00::1]"):
+            with self.subTest(host=host):
+                reason = check_mirrors._check_url_allowed(
+                    f"https://{host}/head", frozenset({host.strip("[]")})
+                )
+                self.assertIsNotNone(reason)
+                self.assertIn("non-global IP literal", reason)
+        self.assertIsNone(check_mirrors._check_url_allowed(
+            "https://8.8.8.8/head", frozenset({"8.8.8.8"})
+        ))
+
     def test_allowlist_extended_from_config(self):
         config = _fake_mirrors_json([
             _mirror_entry("M", "org/m"),  # head_api on api.github.com

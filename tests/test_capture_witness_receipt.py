@@ -320,7 +320,8 @@ class ExtractFromRegistryEntryTests(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         out = Path(tmp.name) / "capture"
-        with patch.object(cwr, "_build_opener", return_value=transport):
+        with patch.object(cwr, "_build_opener") as build_opener:
+            build_opener.return_value.open = transport
             code = cwr.main([
                 "--registry-entry", str(self.ENTRY),
                 "--out", str(out),
