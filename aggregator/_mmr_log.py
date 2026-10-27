@@ -149,8 +149,6 @@ class CheckpointLog:
         signer: "Ed25519CheckpointSigner | None" = None,
         replay_entries: list[dict] | None = None,
     ) -> None:
-        import json
-
         self._root_dir = root_dir
         self._log_id = log_id
 
